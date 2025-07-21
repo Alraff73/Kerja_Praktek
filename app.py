@@ -32,8 +32,10 @@ def load_and_process_data():
     df.dropna(subset=selected_columns, inplace=True)
 
     # Estimasi model FEM yang terpilih (dari notebook Anda)
+    # Kita gunakan semua variabel signifikan dan tidak signifikan untuk ringkasan,
+    # tapi hanya yang signifikan untuk prediksi.
     fem_model = PanelOLS.from_formula(
-        "garis_kemiskinan ~ IPM + upah_minimum + EntityEffects",
+        "garis_kemiskinan ~ IPM + TPAK + upah_minimum + TPT + jumlah_penduduk_miskin + EntityEffects",
         data=df
     ).fit(cov_type='robust')
 
@@ -51,10 +53,12 @@ def load_and_process_data():
     
     unique_intercepts = pd.merge(unique_intercepts, nama_kabupaten, on='kode_kabupaten_kota')
 
-    return df, fem_model, coefficients, unique_intercepts
+    # Kembalikan semua variabel yang dibutuhkan di luar fungsi
+    return df, fem_model, coefficients, unique_intercepts, selected_columns # <-- DIUBAH
 
 # Memuat data menggunakan fungsi yang sudah dibuat
-df, fem_model, coefficients, unique_intercepts = load_and_process_data()
+# Menangkap variabel selected_columns yang sudah dikembalikan
+df, fem_model, coefficients, unique_intercepts, selected_columns = load_and_process_data() # <-- DIUBAH
 
 # --- TAMPILAN APLIKASI STREAMLIT ---
 
@@ -70,8 +74,9 @@ list_kabupaten = unique_intercepts['nama_kabupaten_kota'].tolist()
 selected_kabupaten_nama = st.sidebar.selectbox("Pilih Kabupaten/Kota:", list_kabupaten)
 
 # Input slider untuk IPM
+st.sidebar.markdown("**Input Variabel Signifikan:**")
 input_ipm = st.sidebar.slider(
-    "Input Nilai Indeks Pembangunan Manusia (IPM):",
+    "Indeks Pembangunan Manusia (IPM):",
     min_value=float(df['IPM'].min()),
     max_value=float(df['IPM'].max()),
     value=float(df['IPM'].mean()),
@@ -80,7 +85,7 @@ input_ipm = st.sidebar.slider(
 
 # Input angka untuk Upah Minimum
 input_upah = st.sidebar.number_input(
-    "Input Nilai Upah Minimum (Rp):",
+    "Upah Minimum (Rp):",
     min_value=int(df['upah_minimum'].min()),
     max_value=int(df['upah_minimum'].max() + 1000000), # Beri batas atas lebih
     value=int(df['upah_minimum'].mean()),
@@ -89,19 +94,15 @@ input_upah = st.sidebar.number_input(
 
 # --- PERHITUNGAN PREDIKSI ---
 
-# Ambil koefisien dari model
+# Ambil koefisien dari model HANYA UNTUK VARIABEL SIGNIFIKAN
 coef_ipm = coefficients['IPM']
 coef_upah = coefficients['upah_minimum']
 
 # Ambil intersep untuk kabupaten/kota yang dipilih
 selected_intercept_row = unique_intercepts[unique_intercepts['nama_kabupaten_kota'] == selected_kabupaten_nama]
-if not selected_intercept_row.empty:
-    intersep = selected_intercept_row['intersep'].iloc[0]
-else:
-    intersep = unique_intercepts['intersep'].mean() # Fallback jika tidak ditemukan
+intersep = selected_intercept_row['intersep'].iloc[0] if not selected_intercept_row.empty else unique_intercepts['intersep'].mean()
 
-
-# Hitung prediksi
+# Hitung prediksi HANYA berdasarkan variabel signifikan
 prediksi = (coef_ipm * input_ipm) + (coef_upah * input_upah) + intersep
 
 # --- TAMPILAN UTAMA (MAIN AREA) ---
@@ -120,17 +121,15 @@ with col1:
 with col2:
     st.subheader("Bagaimana Prediksi Dihitung?")
     st.markdown(
-        f"""
-        Prediksi dihitung menggunakan rumus dari model *Fixed Effect* terpilih:
-
-        **Garis Kemiskinan = (K_IPM × IPM) + (K_Upah × Upah) + Intersep**
-
-        - **K_IPM**: `{coef_ipm:.2f}` (Koefisien IPM)
-        - **K_Upah**: `{coef_upah:.4f}` (Koefisien Upah Minimum)
-        - **IPM**: `{input_ipm}` (Input Anda)
-        - **Upah**: `{input_upah:,.0f}` (Input Anda)
-        - **Intersep**: `{intersep:,.2f}` (Nilai unik untuk {selected_kabupaten_nama})
         """
+        Prediksi dihitung menggunakan rumus dari model *Fixed Effect* dengan variabel yang signifikan:
+
+        **Garis Kemiskinan = (`K_IPM` × `IPM`) + (`K_Upah` × `Upah`) + `Intersep`**
+        """
+    )
+    st.code(
+        f"Garis Kemiskinan = ({coef_ipm:.2f} × {input_ipm}) + ({coef_upah:.4f} × {input_upah:,.0f}) + ({intersep:,.2f})",
+        language='bash'
     )
 
 
@@ -143,11 +142,12 @@ with st.expander("Lihat Detail Analisis dan Data"):
     st.markdown(
         """
         **Interpretasi Penting:**
-        - **IPM**: Setiap kenaikan 1 poin IPM, berhubungan dengan kenaikan Garis Kemiskinan sekitar **Rp 16,800**. Ini masuk akal karena IPM yang tinggi seringkali berkorelasi dengan biaya hidup yang lebih tinggi.
-        - **Upah Minimum**: Setiap kenaikan Rp 1 pada upah minimum, berhubungan dengan kenaikan Garis Kemiskinan sekitar **Rp 0.12**.
-        - **P-value (Prob)** untuk kedua variabel ini sangat kecil (0.0000), yang berarti pengaruhnya **sangat signifikan** secara statistik.
+        - **IPM**: Setiap kenaikan 1 poin IPM, berhubungan dengan kenaikan Garis Kemiskinan.
+        - **Upah Minimum**: Setiap kenaikan Rp 1 pada upah minimum, berhubungan dengan kenaikan Garis Kemiskinan.
+        - **P-value (Prob)** untuk `IPM` dan `upah_minimum` sangat kecil (0.0000), yang berarti pengaruhnya **sangat signifikan** secara statistik dan layak digunakan untuk prediksi.
         """
     )
 
     st.subheader("Statistika Deskriptif Data Asli")
+    # Baris ini sekarang tidak akan error lagi
     st.dataframe(df[selected_columns].describe())
