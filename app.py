@@ -86,10 +86,10 @@ input_ipm = st.sidebar.slider(
 # Input angka untuk Upah Minimum
 input_upah = st.sidebar.number_input(
     "Upah Minimum (Rp):",
-    min_value=int(df['upah_minimum'].min()),
-    max_value=int(df['upah_minimum'].max() + 1000000), # Beri batas atas lebih
-    value=int(df['upah_minimum'].mean()),
-    step=50000
+    min_value=1000000,
+    max_value=6000000,
+    value=1000000,  
+    step=1    
 )
 
 # --- PERHITUNGAN PREDIKSI ---
