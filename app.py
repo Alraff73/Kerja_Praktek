@@ -89,7 +89,7 @@ input_upah = st.sidebar.number_input(
     min_value=1000000,
     max_value=6000000,
     value=1000000,  
-    step=1    
+    step=50000    
 )
 
 # --- PERHITUNGAN PREDIKSI ---
