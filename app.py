@@ -83,32 +83,15 @@ input_ipm = st.sidebar.slider(
     step=0.1
 )
 
-# Upah MIn
-range_dict = {
-    "1jt - 1.5jt": 1250000,
-    "1.5jt - 2jt": 1750000,
-    "2jt - 2.5jt": 2250000,
-    "2.5jt - 3jt": 2750000,
-    "3jt - 3.5jt": 3250000,
-    "3.5jt - 4jt": 3750000,
-    "4jt - 4.5jt": 4250000,
-    "4.5jt - 5jt": 4750000,
-    "5jt - 5.5jt": 5250000,
-    "5.5jt - 6jt": 5750000
-}
-
-# 2. Buat select_slider dengan label dari dictionary
-selected_range = st.sidebar.select_slider(
-    "Pilih Rentang Upah Minimum (Rp):",
-    options=list(range_dict.keys())
+# Upah Minimum
+input_upah = st.sidebar.slider(
+    "Geser untuk memilih Upah Minimum (Rp):",
+    min_value=1000000,  # Batas bawah 1 juta
+    max_value=6000000,  # Batas atas 6 juta
+    value=2500000,      # Nilai awal yang ditampilkan
+    step=500000,        # Slider akan melompat per 500 ribu
+    format="Rp %,.0f"   # Format angka agar mudah dibaca 
 )
-
-# 3. Ambil nilai tengah dari rentang yang dipilih untuk perhitungan
-input_upah = range_dict[selected_range]
-
-# (Opsional) Tampilkan nilai yang digunakan agar transparan
-st.sidebar.caption(f"Nilai yang digunakan untuk prediksi: **Rp {input_upah:,.0f}**")
-# --- PERHITUNGAN PREDIKSI ---
 
 # Ambil koefisien dari model HANYA UNTUK VARIABEL SIGNIFIKAN
 coef_ipm = coefficients['IPM']
