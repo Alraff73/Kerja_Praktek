@@ -146,7 +146,7 @@ with st.expander("Lihat Detail Analisis dan Data"):
         **Interpretasi Penting:**
         - **IPM**: Setiap kenaikan 1 poin IPM, berhubungan dengan kenaikan Garis Kemiskinan.
         - **Upah Minimum**: Setiap kenaikan Rp 1 pada upah minimum, berhubungan dengan kenaikan Garis Kemiskinan.
-        - **P-value (Prob)** untuk `IPM` dan `upah_minimum` sangat kecil (0.0000), yang berarti pengaruhnya **sangat signifikan** secara statistik dan layak digunakan untuk prediksi.
+        - **P-value (Prob)** untuk `IPM` dan `upah_minimum` < nilai signifikansi 0.05, yang berarti pengaruhnya **sangat signifikan** secara statistik dan layak digunakan untuk prediksi.
         """
     )
 
