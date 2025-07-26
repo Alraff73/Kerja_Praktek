@@ -86,12 +86,15 @@ input_ipm = st.sidebar.slider(
 # Upah Minimum
 input_upah = st.sidebar.slider(
     "Geser untuk memilih Upah Minimum (Rp):",
-    min_value=1000000,  # Batas bawah 1 juta
-    max_value=6000000,  # Batas atas 6 juta
-    value=2500000,      # Nilai awal yang ditampilkan
-    step=500000,        # Slider akan melompat per 500 ribu
-    format="Rp %,.0f"   # Format angka agar mudah dibaca 
+    min_value=1000000,
+    max_value=6000000,
+    value=2500000,
+    step=500000
+    # Parameter 'format' dihapus untuk stabilitas
 )
+
+# Menampilkan nilai yang dipilih dengan format di bawah slider
+st.sidebar.markdown(f"**Nilai terpilih:** `Rp {input_upah:,.0f}`")
 
 # Ambil koefisien dari model HANYA UNTUK VARIABEL SIGNIFIKAN
 coef_ipm = coefficients['IPM']
